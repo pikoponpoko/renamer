@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>リネーマー</title>
+<meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e2126" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <button class="ib" id="bOpen" data-tip="フォルダを開く"><svg><use href="#i-folder"/></svg></button>
+  <button class="ib" id="bFiles" data-tip="ファイルを追加"><svg><use href="#i-file"/></svg></button>
+  <button class="ib tg" id="bSub" data-tip="サブフォルダを含める" aria-pressed="false"><svg><use href="#i-tree"/></svg></button>
+  <button class="ib" id="bReload" data-tip="再読み込み"><svg><use href="#i-reload"/></svg></button>
+  <button class="ib" id="bClear" data-tip="リストを空にする"><svg><use href="#i-x"/></svg></button>
+  <span class="sep"></span>
+  <div class="search"><svg><use href="#i-filter"/></svg><input id="filter" placeholder="絞り込み（* ? 使用可）" spellcheck="false"></div>
+  <span class="sep"></span>
+  <button class="ib" id="bUndo" data-tip="元に戻す (Ctrl+Z)" disabled><svg><use href="#i-undo"/></svg></button>
+  <button class="pb" id="bRun" data-tip="リネーム実行 (Ctrl+Enter)" disabled><svg><use href="#i-play"/></svg><span>実行</span></button>
+</header>
+<main>
+  <aside class="rules">
+    <div class="rhead">
+      <select id="preset" data-tip="プリセット"><option value="">プリセット</option></select>
+      <button class="ib" id="bSave" data-tip="プリセットとして保存"><svg><use href="#i-save"/></svg></button>
+      <button class="ib" id="bDelPreset" data-tip="プリセットを削除"><svg><use href="#i-trash"/></svg></button>
+      <span class="sep"></span>
+      <button class="ib" id="bResetRules" data-tip="ルールをすべて削除"><svg><use href="#i-eraser"/></svg></button>
+      <button class="ib acc" id="bAdd" data-tip="ルールを追加"><svg><use href="#i-plus"/></svg></button>
+    </div>
+    <div id="ruleList" class="rlist"></div>
+  </aside>
+  <section class="files" id="drop">
+    <table id="tbl">
+      <thead><tr>
+        <th class="ck"><input type="checkbox" id="ckAll" checked></th>
+        <th data-k="name">元の名前</th>
+        <th class="ar"></th>
+        <th data-k="newName">新しい名前</th>
+        <th data-k="dir" class="dirc">フォルダ</th>
+        <th data-k="size" class="num">サイズ</th>
+        <th data-k="mtime" class="dt">更新日時</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty">
+      <button class="pb" id="bOpen2"><svg><use href="#i-folder"/></svg><span>フォルダを開く</span></button>
+      <span>またはドロップ</span>
+    </div>
+  </section>
+</main>
+<footer class="status"><span id="st"></span><span id="mode"></span></footer>
+<div id="menu" class="menu" hidden></div>
+<div id="tip" class="tip" hidden></div>
+<div id="toast" class="toast" hidden></div>
+<input type="file" id="fileIn" multiple hidden>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></symbol>
+    <symbol id="i-tree" viewBox="0 0 24 24"><path d="M5 4v14a2 2 0 0 0 2 2h3M5 9h5"/><rect x="12" y="6" width="8" height="6" rx="1"/><rect x="12" y="15" width="8" height="6" rx="1"/></symbol>
+    <symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8V3M7 21v-7h10v7"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="i-eraser" viewBox="0 0 24 24"><path d="M16 3l5 5-11 11H5l-2-2z"/><path d="M10 9l5 5M14 21h7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" stroke-width="3"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+<script src="app.js"></script>
+</body>
+</html>
