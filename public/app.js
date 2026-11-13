@@ -370,7 +370,11 @@ async function loadDir(dh) {
 async function openFolder() {
   if (!FS) { $('#fileIn').click(); return; }
   try { await loadDir(await showDirectoryPicker({ id: 'renamer', mode: 'readwrite' })); }
-  catch (e) { if (e.name !== 'AbortError') toast(e.message, true); }
+  catch (e) {
+    if (e.name === 'AbortError') return;
+    if (e.name === 'SecurityError') { const fi = $('#fileIn'); fi.setAttribute('webkitdirectory', ''); fi.click(); setTimeout(() => fi.removeAttribute('webkitdirectory'), 0); return; }
+    toast(e.message, true);
+  }
 }
 function addMemFiles(list) {
   if (S.mode === 'fs') { S.files = []; S.root = null; S.history = []; }
@@ -525,11 +529,19 @@ $('#preset').onchange = e => {
 };
 $('#bSave').onclick = () => {
   if (!S.rules.length) return;
-  const name = prompt('プリセット名', $('#preset').value || '');
-  if (!name) return;
-  S.presets[name] = S.rules.map(({ id, _err, ...r }) => r);
-  store.set('rn.presets', S.presets); renderPresets(); $('#preset').value = name;
+  const sel = $('#preset'), ip = $('#presetName');
+  ip.value = sel.value || ''; sel.hidden = true; ip.hidden = false; ip.focus(); ip.select();
 };
+$('#presetName').addEventListener('keydown', e => {
+  const ip = e.currentTarget;
+  if (e.key === 'Enter' && ip.value.trim()) {
+    const name = ip.value.trim();
+    S.presets[name] = S.rules.map(({ id, _err, ...r }) => r);
+    store.set('rn.presets', S.presets); renderPresets(); $('#preset').value = name; ip.blur();
+    toast(`「${name}」を保存しました`);
+  } else if (e.key === 'Escape') ip.blur();
+});
+$('#presetName').addEventListener('blur', () => { $('#presetName').hidden = true; $('#preset').hidden = false; });
 $('#bDelPreset').onclick = () => { const k = $('#preset').value; if (!k) return; delete S.presets[k]; store.set('rn.presets', S.presets); renderPresets(); };
 $('#bResetRules').onclick = () => { S.rules = []; $('#preset').value = ''; renderRules(); };
 $('#bAdd').onclick = e => menu(e.currentTarget, ORDER.map(t => [RULES[t].label, () => addRule(t)]));
