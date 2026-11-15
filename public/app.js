@@ -82,13 +82,14 @@ const RULES = {
   },
   seq: {
     label: '連番',
-    def: { start: 1, step: 1, digits: 3, pos: 'end', idx: 0, sep: '_', perDir: false, target: 'base' },
+    def: { text: '', start: 1, step: 1, digits: 3, pos: 'replace', idx: 0, sep: '_', perDir: false, target: 'base' },
     form: [
+      ['text', 'text', '文字列'],
       [['start', 'num', '開始', '開始番号'], ['step', 'num', '増分', '増分'], ['digits', 'num', '桁', '桁数']],
       [['pos', 'seg', '', [...POS, ['replace', '置換']]], ['idx', 'num', '', '位置', 'pos=index'], ['sep', 'text', '', '区切り文字', 'pos!=index&pos!=replace', 'w'], 'grow'],
       [['perDir', 'chip', 'フォルダごと', 'フォルダごとに番号を振り直す'], 'grow', TARGET],
     ],
-    apply: (s, o, c) => place(s, pad((+o.start || 0) + (o.perDir ? c.di : c.i) * (+o.step || 0), +o.digits || 0), o.pos, o.idx, o.sep),
+    apply: (s, o, c) => place(s, (o.text || '') + pad((+o.start || 0) + (o.perDir ? c.di : c.i) * (+o.step || 0), +o.digits || 0), o.pos, o.idx, o.sep),
   },
   date: {
     label: '日時',
@@ -127,7 +128,7 @@ const ORDER = ['replace', 'insert', 'remove', 'seq', 'date', 'case', 'width', 'e
 
 /* ---------- 状態 ---------- */
 const S = {
-  files: [], rules: store.get('rn.rules', []), presets: store.get('rn.presets', {}),
+  files: [], rules: (r => r.length ? r : [{ type: 'seq' }])(store.get('rn.rules', [])), presets: store.get('rn.presets', {}),
   root: null, mode: null, recursive: store.get('rn.sub', false), filter: '', sort: { k: 'name', d: 1 }, history: [], busy: false,
 };
 let uid = 1;

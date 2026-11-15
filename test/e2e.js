@@ -4,6 +4,8 @@ const assert = (c, m) => { if (!c) { console.error('FAIL:', m); process.exitCode
   const b = await chromium.launch(); const p = await b.newPage({ locale: 'ja-JP' });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
   await p.goto('http://localhost:8765/');
+  const init = await p.evaluate(() => window.__rn.S.rules.map(r => r.type + ':' + r.pos).join());
+  assert(init === 'seq:replace', '初期ルールは文字列+連番の置換 ' + init);
   // 単体: ルール適用
   const r = await p.evaluate(() => {
     const { RULES, applyRules, S, conv } = window.__rn;
@@ -19,7 +21,8 @@ const assert = (c, m) => { if (!c) { console.error('FAIL:', m); process.exitCode
       rmRange: t([mk('remove', { from: 0, count: 4 })], 'IMG_0001.jpg'),
       rmEnd: t([mk('remove', { from: 0, count: 2, end: true })], 'abcdef.jpg'),
       rmBr: t([mk('remove', { mode: 'brackets' })], '曲名 (Live) 【高音質】.mp3'),
-      seq: t([mk('seq', {})], 'a.jpg', { i: 4 }),
+      seq: t([mk('seq', { pos: 'end' })], 'a.jpg', { i: 4 }),
+      seqText: t([mk('seq', { text: '旅行_' })], 'IMG_1.JPG', { i: 1 }),
       seqRep: t([mk('seq', { pos: 'replace', digits: 2, start: 10, step: 5 })], 'a.jpg', { i: 2 }),
       date: t([mk('date', { fmt: 'YYYY-MM-DD_hhmmss' })], 'a.jpg'),
       title: t([mk('case', { mode: 'title' })], 'hello wORLD.TXT'),
@@ -36,7 +39,7 @@ const assert = (c, m) => { if (!c) { console.error('FAIL:', m); process.exitCode
       bad: (() => { S.rules = [mk('replace', { find: '(', repl: '', regex: true })]; applyRules({ name: 'a(b' }, {}); return !!S.rules[0]._err; })(),
     };
   });
-  const exp = { rep: 'bbnbnb.txt', rx: 'x34-12.jpg', lit: 'a_b_c.txt', icase: 'p_1.JPG', ins: 'ab★cd.png', insEnd: 'abcd-x.png', rmRange: '0001.jpg', rmEnd: 'abcd.jpg', rmBr: '曲名.mp3', seq: 'a_005.jpg', seqRep: '20.jpg', date: '2024-01-05_090307_a.jpg', title: 'Hello World.TXT', extLow: 'A.jpg', extSet: 'a.jpeg', extRm: 'a.tar', extTarget: 'a.PNG', full: 'png.png', z2h: 'ABC123 テスト', kana: 'ガッコウ テスト', k2h: 'かたかな', off: 'a.txt', chain: '0007.jpg', bad: true };
+  const exp = { rep: 'bbnbnb.txt', rx: 'x34-12.jpg', lit: 'a_b_c.txt', icase: 'p_1.JPG', ins: 'ab★cd.png', insEnd: 'abcd-x.png', rmRange: '0001.jpg', rmEnd: 'abcd.jpg', rmBr: '曲名.mp3', seq: 'a_005.jpg', seqText: '旅行_002.JPG', seqRep: '20.jpg', date: '2024-01-05_090307_a.jpg', title: 'Hello World.TXT', extLow: 'A.jpg', extSet: 'a.jpeg', extRm: 'a.tar', extTarget: 'a.PNG', full: 'png.png', z2h: 'ABC123 テスト', kana: 'ガッコウ テスト', k2h: 'かたかな', off: 'a.txt', chain: '0007.jpg', bad: true };
   for (const k in exp) assert(r[k] === exp[k], `${k}: ${r[k]}`);
 
   // E2E: OPFSフォルダでリネーム・衝突・元に戻す
